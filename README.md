@@ -1,5 +1,7 @@
 # Waste Classification System using CNN
 
+Intelligent waste classification using deep learning with real-time webcam support — perfect for sustainability and recycling automation.
+
 [![Python](https://img.shields.io/badge/Python-3.8-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13.0-orange?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/)
 [![Keras](https://img.shields.io/badge/Keras-2.13.1-red?logo=keras&logoColor=white)](https://keras.io/)
