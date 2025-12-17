@@ -36,8 +36,8 @@ Data augmentation and masks were applied to improve generalization.
 
 ## 🎥 Demo
 
-![Demo GIF](Video/demo.gif)  
-
+[![Watch the demo](path/a/una/imagen-miniatura.jpg)](videos/demo.mp4)
+ 
 ## ✅ Results
 - Accurate multi-class waste classification  
 - Real-time predictions using webcam input  
