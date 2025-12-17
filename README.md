@@ -19,10 +19,9 @@ Supports **real-time predictions using a webcam** for hands-on demonstration.
 
 ## 🛠️ Technologies
 - **Programming:** Python  
-- **Machine Learning / AI:** TensorFlow, Keras, Convolutional Neural Networks (CNN)  
+- **Machine Learning / AI:** TensorFlow, Keras, CNN  
 - **Computer Vision:** OpenCV  
-- **Data Analysis & Processing:** NumPy, Matplotlib  
-- **Tools:** Git, GitHub, Jupyter Notebook  
+- **Data Processing / Analysis:** NumPy, Matplotlib  
 
 ## 📊 Dataset
 Custom dataset containing images for different waste categories:  
@@ -41,16 +40,15 @@ Data augmentation and masks were applied to improve generalization.
 
 ## 🎥 Demo
 
-[![Watch the demo](videos/demo.mp4)
+[🎥 Watch the demo](https://github.com/SebastianZutrep/waste-classification-cnn/blob/main/videos/demo.mp4)
  
 ## ✅ Results
-- Accurate multi-class waste classification  
-- Real-time predictions using webcam input  
-- Output mapped to correct disposal bins:  
-  - Residuos aprovechables  
-  - Residuos no aprovechables  
-  - Residuos orgánicos aprovechables  
-  - Residuos peligrosos  
+- Real-time waste classification with webcam
+- Correct bin mapping:
+  - Residuos aprovechables
+  - Residuos no aprovechables
+  - Residuos orgánicos aprovechables
+  - Residuos peligrosos
 
 ## 🚀 How to Run
 
