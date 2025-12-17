@@ -36,7 +36,7 @@ Data augmentation and masks were applied to improve generalization.
 
 ## 🎥 Demo
 
-[![Watch the demo](path/a/una/imagen-miniatura.jpg)](videos/demo.mp4)
+[![Watch the demo](videos/demo.mp4)
  
 ## ✅ Results
 - Accurate multi-class waste classification  
