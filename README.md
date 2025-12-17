@@ -21,6 +21,11 @@ Custom dataset containing images of different waste categories such as plastic, 
 - Image preprocessing and data augmentation
 - Train/validation split
 
+## Model Performance
+
+![Model Accuracy](results/precision_modelo.jpg)
+
+
 ## Results
 - Multi-class waste classification with satisfactory validation accuracy
 - Visual evaluation using sample predictions
