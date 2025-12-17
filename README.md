@@ -1,8 +1,14 @@
 # Waste Classification System using CNN
 
 [![Python](https://img.shields.io/badge/Python-3.8-blue?logo=python&logoColor=white)](https://www.python.org/)
-[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.14-orange?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/)
+[![TensorFlow](https://img.shields.io/badge/TensorFlow-2.13.0-orange?logo=tensorflow&logoColor=white)](https://www.tensorflow.org/)
+[![Keras](https://img.shields.io/badge/Keras-2.13.1-red?logo=keras&logoColor=white)](https://keras.io/)
+[![NumPy](https://img.shields.io/badge/NumPy-1.24.0-yellow?logo=numpy&logoColor=white)](https://numpy.org/)
+[![OpenCV](https://img.shields.io/badge/OpenCV-4.8.0.74-blue?logo=opencv&logoColor=white)](https://opencv.org/)
+[![scikit-learn](https://img.shields.io/badge/scikit--learn-1.3.0-lightgrey?logo=scikit-learn&logoColor=white)](https://scikit-learn.org/)
+[![Matplotlib](https://img.shields.io/badge/Matplotlib-3.7.1-blue?logo=matplotlib&logoColor=white)](https://matplotlib.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
+
 
 ## 🌍 Problem
 Incorrect waste disposal contributes to environmental pollution and resource mismanagement.  
