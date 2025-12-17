@@ -9,7 +9,6 @@
 [![Matplotlib](https://img.shields.io/badge/Matplotlib-3.7.1-blue?logo=matplotlib&logoColor=white)](https://matplotlib.org/)
 [![License](https://img.shields.io/badge/License-MIT-green)](LICENSE)
 
-
 ## 🌍 Problem
 Incorrect waste disposal contributes to environmental pollution and resource mismanagement.  
 This project automates waste classification to ensure proper disposal and recycling.
@@ -56,23 +55,23 @@ Data augmentation and masks were applied to improve generalization.
 ## 🚀 How to Run
 
 ```bash
-# 1. Clone the repository
-git clone https://github.com/tuusuario/tu-repo.git
-cd tu-repo
 
-# 2. Create a virtual environment
-python -m venv venv
-# Linux/macOS
-source venv/bin/activate
+# 1) Clone the repo
+git clone https://github.com/SebastianZutrep/waste-classification-cnn.git
+cd waste-classification-cnn
+
+# 2) Create virtual environment
+python -m venv .venv
+# activate:
 # Windows
-venv\Scripts\activate
+.venv\Scripts\activate
+# Linux/macOS
+# source .venv/bin/activate
 
-# 3. Install dependencies
+# 3) Install dependencies
 pip install -r requirements.txt
 
-# 4. Train the model (optional, pretrained model included)
-python entrenamiento_modelo.py
-
-# 5. Run real-time classification
+# 4) Run
 python main.py
+
 
