@@ -59,7 +59,7 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=[
         "http://localhost:3000",
-        "https://waste-classification-cnn-git-main-sebastianzutreps-projects.vercel.app"
+        "https://waste-classification-cnn.vercel.app"
     ],
     allow_credentials=True,
     allow_methods=["*"],
