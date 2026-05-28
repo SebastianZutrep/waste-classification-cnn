@@ -1,0 +1,30 @@
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:wght@300;400;500&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* { box-sizing: border-box; }
+
+body {
+  background: #09100e;
+  color: #dff0e8;
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+}
+
+@keyframes scanMove {
+  0%        { top: 0%;   opacity: 0; }
+  8%, 92%   {            opacity: 0.9; }
+  100%      { top: 100%; opacity: 0; }
+}
+@keyframes blink    { 0%,100% { opacity:1; } 50% { opacity:0.3; } }
+@keyframes slideIn  { from { opacity:0; transform:translateX(-6px); } to { opacity:1; } }
+@keyframes dotPulse { 0%,100% { opacity:0.2; } 50% { opacity:1; } }
+
+.scan-line { animation: scanMove 2.2s ease-in-out infinite; }
+.slide-in  { animation: slideIn 0.2s ease; }
+.dot-1     { animation: dotPulse 1.1s infinite; }
+.dot-2     { animation: dotPulse 1.1s 0.2s infinite; }
+.dot-3     { animation: dotPulse 1.1s 0.4s infinite; }
+.live-dot  { animation: blink 2s infinite; }

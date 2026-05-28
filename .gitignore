@@ -1,0 +1,72 @@
+# Python
+.venv/
+.venv-server/
+venv/
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Node / Next.js
+ecoscan-web/node_modules/
+ecoscan-web/.next/
+ecoscan-web/out/
+ecoscan-web/.turbo/
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Tailwind / build
+*.css.map
+
+# Editor and OS
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Environment variables
+.env
+.env.*
+*.env
+
+# Logs
+*.log
+logs/
+*.log.*
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Model artifacts and datasets
+Model/
+models/
+Masks/
+Recursos/
+*.h5
+*.keras
+*.pt
+*.pth
+*.pkl
+*.joblib
+*.onnx
+
+# Python cache and virtual envs
+.pytest_cache/
+coverage/
+htmlcov/
+build/
+dist/
+
+# Misc
+*.sqlite3
+*.db
+*.sqlite
+
+# Local IDE files
+.vscode/
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln

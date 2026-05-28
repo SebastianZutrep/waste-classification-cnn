@@ -1,0 +1,898 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>EcoScan — Clasificador de Residuos</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=DM+Sans:ital,wght@0,300;0,400;0,500;1,400&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --green:       #1D9E75;
+  --green-dim:   rgba(29,158,117,0.15);
+  --green-dark:  #085041;
+  --amber:       #BA7517;
+  --amber-dim:   rgba(186,117,23,0.15);
+  --red:         #A32D2D;
+  --red-dim:     rgba(163,45,45,0.15);
+  --blue:        #185FA5;
+  --blue-dim:    rgba(24,95,165,0.15);
+  --gray:        #5F5E5A;
+  --bg:          #09100e;
+  --surface:     #111c17;
+  --surface2:    #182419;
+  --border:      rgba(29,158,117,0.18);
+  --text:        #dff0e8;
+  --text-muted:  #6a9080;
+  --font-mono:   'Space Mono', monospace;
+  --font-sans:   'DM Sans', sans-serif;
+}
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-sans);
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+/* ─── Header ─────────────────────────────────────────────────────────────── */
+header {
+  width: 100%;
+  padding: 1.25rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  border-bottom: 1px solid var(--border);
+  background: rgba(9,16,14,0.8);
+  backdrop-filter: blur(8px);
+  position: sticky;
+  top: 0;
+  z-index: 10;
+}
+
+.logo {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.logo-mark {
+  width: 34px; height: 34px;
+  border: 2px solid var(--green);
+  border-radius: 9px;
+  display: grid;
+  place-items: center;
+}
+
+.logo-mark svg { width: 18px; height: 18px; fill: var(--green); }
+
+.logo h1 {
+  font-family: var(--font-mono);
+  font-size: 15px;
+  font-weight: 700;
+  letter-spacing: 0.1em;
+  color: var(--green);
+}
+
+.header-right {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.server-status {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  padding: 5px 10px;
+  border-radius: 6px;
+}
+
+.server-dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--gray);
+  transition: background 0.4s;
+}
+
+.server-dot.ok     { background: var(--green); box-shadow: 0 0 5px var(--green); }
+.server-dot.error  { background: var(--red); }
+.server-dot.checking { background: var(--amber); animation: blink 1s infinite; }
+
+/* ─── Layout ─────────────────────────────────────────────────────────────── */
+.container {
+  width: 100%;
+  max-width: 1000px;
+  padding: 2rem 1.5rem;
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 1.5rem;
+  align-items: start;
+}
+
+/* ─── Camera ─────────────────────────────────────────────────────────────── */
+.camera-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+.video-wrapper {
+  position: relative;
+  background: #000;
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid var(--border);
+  aspect-ratio: 4/3;
+}
+
+video  { width: 100%; height: 100%; object-fit: cover; display: block; }
+canvas { display: none; }
+
+.scan-overlay {
+  position: absolute; inset: 0;
+  pointer-events: none;
+  display: flex; align-items: center; justify-content: center;
+}
+
+.scan-box {
+  width: 210px; height: 210px;
+  border: 1.5px solid rgba(29,158,117,0.5);
+  border-radius: 14px;
+  position: relative;
+}
+
+.scan-box::before, .scan-box::after,
+.corner::before, .corner::after {
+  content: '';
+  position: absolute;
+  width: 22px; height: 22px;
+  border-color: var(--green);
+  border-style: solid;
+}
+.scan-box::before { top: -2px; left: -2px;  border-width: 3px 0 0 3px; border-radius: 5px 0 0 0; }
+.scan-box::after  { top: -2px; right: -2px; border-width: 3px 3px 0 0; border-radius: 0 5px 0 0; }
+.corner::before   { bottom: -2px; left: -2px;  border-width: 0 0 3px 3px; border-radius: 0 0 0 5px; }
+.corner::after    { bottom: -2px; right: -2px; border-width: 0 3px 3px 0; border-radius: 0 0 5px 0; }
+
+.scan-line {
+  position: absolute; left: 8px; right: 8px; top: 0;
+  height: 2px;
+  background: linear-gradient(to right, transparent, var(--green), transparent);
+  animation: scanMove 2.2s ease-in-out infinite;
+  opacity: 0;
+}
+.scan-line.active { opacity: 1; }
+
+@keyframes scanMove {
+  0%   { top: 0%; opacity: 0; }
+  8%   { opacity: 0.9; }
+  92%  { opacity: 0.9; }
+  100% { top: 100%; opacity: 0; }
+}
+
+/* ─── Status bar ─────────────────────────────────────────────────────────── */
+.status-bar {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 13px;
+}
+
+.status-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--gray);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+.status-dot.live     { background: var(--green); box-shadow: 0 0 6px var(--green); animation: blink 2s infinite; }
+.status-dot.scanning { background: var(--amber); box-shadow: 0 0 6px var(--amber); }
+.status-dot.error    { background: var(--red); }
+
+@keyframes blink { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
+
+#status-text { color: var(--text-muted); flex: 1; }
+
+.scanning-pill {
+  display: none;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--amber);
+  background: var(--amber-dim);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.scanning-pill.active { display: flex; }
+
+.dots span {
+  display: inline-block;
+  width: 4px; height: 4px;
+  border-radius: 50%;
+  background: var(--amber);
+  margin: 0 1px;
+  animation: blink 1.1s infinite;
+}
+.dots span:nth-child(2) { animation-delay: 0.2s; }
+.dots span:nth-child(3) { animation-delay: 0.4s; }
+
+/* ─── Buttons ─────────────────────────────────────────────────────────────── */
+.btn-row { display: flex; gap: 10px; }
+
+button {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 10px 18px;
+  border-radius: 8px;
+  border: 1.5px solid;
+  cursor: pointer;
+  transition: all 0.15s;
+}
+
+#btn-start {
+  flex: 1;
+  background: var(--green);
+  color: #fff;
+  border-color: var(--green);
+}
+#btn-start:hover { background: var(--green-dark); border-color: var(--green-dark); }
+
+#btn-scan {
+  flex: 1;
+  background: transparent;
+  color: var(--green);
+  border-color: var(--green);
+}
+#btn-scan:hover:not(:disabled) { background: var(--green-dim); }
+#btn-scan:disabled { opacity: 0.3; cursor: default; }
+
+#btn-auto {
+  background: transparent;
+  color: var(--text-muted);
+  border-color: var(--border);
+  padding: 10px 14px;
+}
+#btn-auto.on { color: var(--amber); border-color: var(--amber); background: var(--amber-dim); }
+
+/* ─── Right panel ─────────────────────────────────────────────────────────── */
+.results-panel { display: flex; flex-direction: column; gap: 1rem; }
+
+/* Result card */
+.result-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 1.25rem;
+  transition: border-color 0.4s;
+}
+.result-card.success { border-color: rgba(29,158,117,0.55); }
+.result-card.warning { border-color: rgba(186,117,23,0.55); }
+.result-card.danger  { border-color: rgba(163,45,45,0.55); }
+
+.card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.75rem;
+}
+
+.card-label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.conf-badge {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  padding: 3px 9px;
+  border-radius: 6px;
+  background: var(--surface2);
+  color: var(--text-muted);
+  transition: color 0.3s, background 0.3s;
+}
+.conf-badge.high   { color: var(--green); background: var(--green-dim); }
+.conf-badge.medium { color: var(--amber); background: var(--amber-dim); }
+.conf-badge.low    { color: var(--red);   background: var(--red-dim); }
+
+.material-name {
+  font-size: 20px;
+  font-weight: 500;
+  margin-bottom: 0.5rem;
+  min-height: 1.5em;
+}
+
+.bin-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  padding: 5px 10px;
+  border-radius: 6px;
+  background: var(--surface2);
+  border: 1px solid var(--border);
+  color: var(--text-muted);
+  transition: color 0.3s, border-color 0.3s;
+}
+
+.bin-pill .dot {
+  width: 7px; height: 7px;
+  border-radius: 50%;
+  background: var(--gray);
+  flex-shrink: 0;
+  transition: background 0.3s;
+}
+
+.conf-bar {
+  margin-top: 1rem;
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+.conf-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--gray);
+  width: 0%;
+  transition: width 0.55s ease, background 0.3s;
+}
+
+/* Score breakdown */
+.scores-section { margin-top: 1rem; }
+
+.scores-title {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+  margin-bottom: 8px;
+}
+
+.score-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 6px;
+}
+
+.score-label {
+  font-size: 11px;
+  color: var(--text-muted);
+  width: 120px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex-shrink: 0;
+}
+
+.score-track {
+  flex: 1;
+  height: 3px;
+  background: var(--surface2);
+  border-radius: 99px;
+  overflow: hidden;
+}
+
+.score-fill {
+  height: 100%;
+  border-radius: 99px;
+  background: var(--border);
+  transition: width 0.5s ease;
+}
+.score-fill.top { background: var(--green); }
+
+.score-pct {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  width: 34px;
+  text-align: right;
+}
+
+/* Bins grid */
+.bins-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.bin-card {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 10px 8px;
+  text-align: center;
+  transition: border-color 0.35s, background 0.35s;
+}
+
+.bin-card.active { background: var(--surface2); }
+
+.bin-icon { font-size: 20px; margin-bottom: 4px; }
+
+.bin-card p {
+  font-size: 9px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  letter-spacing: 0.03em;
+  line-height: 1.4;
+}
+.bin-card.active p { color: var(--text); }
+
+/* History */
+.history-list {
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.history-header {
+  padding: 9px 14px;
+  border-bottom: 1px solid var(--border);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.history-header span {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
+
+.btn-clear {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  background: none;
+  border: none;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 0;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+.btn-clear:hover { color: var(--red); }
+
+#history-items { max-height: 180px; overflow-y: auto; }
+
+.h-item {
+  padding: 8px 14px;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  border-bottom: 1px solid var(--border);
+  font-size: 12px;
+  animation: slideIn 0.2s ease;
+}
+.h-item:last-child { border-bottom: none; }
+
+@keyframes slideIn { from { opacity: 0; transform: translateX(-6px); } to { opacity: 1; } }
+
+.h-dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+.h-mat { flex: 1; color: var(--text); font-size: 12px; }
+.h-conf { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); }
+.h-time { font-family: var(--font-mono); font-size: 10px; color: var(--text-muted); margin-left: auto; }
+
+.empty-state {
+  padding: 1.5rem;
+  text-align: center;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: var(--font-mono);
+}
+
+/* Server URL config */
+.config-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 6px 10px;
+}
+
+.config-bar label {
+  font-size: 10px;
+  font-family: var(--font-mono);
+  color: var(--text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  white-space: nowrap;
+}
+
+.config-bar input {
+  flex: 1;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--text);
+  min-width: 0;
+}
+
+.config-bar button {
+  font-size: 10px;
+  padding: 4px 10px;
+  border-radius: 5px;
+  background: var(--green-dim);
+  color: var(--green);
+  border-color: transparent;
+}
+.config-bar button:hover { background: var(--green); color: #fff; }
+
+@media (max-width: 680px) {
+  .container { grid-template-columns: 1fr; }
+  .results-panel { order: -1; }
+  header span.subtitle { display: none; }
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">
+    <div class="logo-mark">
+      <svg viewBox="0 0 24 24"><path d="M12 2L4 6v6c0 5.55 3.84 10.74 8 12 4.16-1.26 8-6.45 8-12V6l-8-4z"/></svg>
+    </div>
+    <h1>EcoScan</h1>
+  </div>
+  <div class="header-right">
+    <div class="server-status">
+      <div class="server-dot checking" id="server-dot"></div>
+      <span id="server-label">Conectando...</span>
+    </div>
+  </div>
+</header>
+
+<div class="container">
+
+  <!-- ── Cámara ─────────────────────────────────────────────────────────── -->
+  <div class="camera-panel">
+
+    <div class="config-bar">
+      <label>Servidor</label>
+      <input type="text" id="server-url" value="http://localhost:8000" placeholder="http://localhost:8000"/>
+      <button onclick="checkServer()">Verificar</button>
+    </div>
+
+    <div class="video-wrapper">
+      <video id="video" autoplay playsinline muted></video>
+      <canvas id="canvas"></canvas>
+      <div class="scan-overlay">
+        <div class="scan-box">
+          <div class="corner"></div>
+          <div class="scan-line" id="scan-line"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="status-bar">
+      <div class="status-dot" id="status-dot"></div>
+      <span id="status-text">Cámara no iniciada</span>
+      <div class="scanning-pill" id="scanning-pill">
+        <div class="dots"><span></span><span></span><span></span></div>
+        Analizando
+      </div>
+    </div>
+
+    <div class="btn-row">
+      <button id="btn-start">Iniciar cámara</button>
+      <button id="btn-scan" disabled>Escanear</button>
+      <button id="btn-auto">Auto</button>
+    </div>
+  </div>
+
+  <!-- ── Resultados ─────────────────────────────────────────────────────── -->
+  <div class="results-panel">
+
+    <div class="result-card" id="result-card">
+      <div class="card-header">
+        <span class="card-label">Material detectado</span>
+        <span class="conf-badge" id="conf-badge">—</span>
+      </div>
+      <div class="material-name" id="material-name">—</div>
+      <div class="bin-pill" id="bin-pill">
+        <span class="dot" id="bin-dot"></span>
+        <span id="bin-text">Sin clasificar</span>
+      </div>
+      <div class="conf-bar">
+        <div class="conf-fill" id="conf-fill"></div>
+      </div>
+
+      <div class="scores-section" id="scores-section" style="display:none">
+        <div class="scores-title">Todas las clases</div>
+        <div id="scores-list"></div>
+      </div>
+    </div>
+
+    <div class="bins-grid">
+      <div class="bin-card" id="bin-aprovechable">
+        <div class="bin-icon">♻️</div>
+        <p>Aprovechables</p>
+      </div>
+      <div class="bin-card" id="bin-organico">
+        <div class="bin-icon">🍃</div>
+        <p>Orgánicos aprovechables</p>
+      </div>
+      <div class="bin-card" id="bin-no-aprovechable">
+        <div class="bin-icon">🗑️</div>
+        <p>No aprovechables</p>
+      </div>
+      <div class="bin-card" id="bin-peligroso">
+        <div class="bin-icon">⚠️</div>
+        <p>Peligrosos</p>
+      </div>
+    </div>
+
+    <div class="history-list">
+      <div class="history-header">
+        <span>Historial</span>
+        <button class="btn-clear" onclick="clearHistory()">Limpiar</button>
+      </div>
+      <div id="history-items">
+        <div class="empty-state">Sin escaneos aún</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+// ── Config ─────────────────────────────────────────────────────────────────
+const BIN_COLORS = {
+  "Residuos aprovechables":           "#185FA5",
+  "Residuos organicos aprovechables": "#1D9E75",
+  "Residuos no aprovechables":        "#5F5E5A",
+  "Residuos peligrosos":              "#A32D2D",
+  "No identificado":                  "#5F5E5A",
+};
+
+const BIN_IDS = {
+  "Residuos aprovechables":           "bin-aprovechable",
+  "Residuos organicos aprovechables": "bin-organico",
+  "Residuos no aprovechables":        "bin-no-aprovechable",
+  "Residuos peligrosos":              "bin-peligroso",
+};
+
+// ── State ──────────────────────────────────────────────────────────────────
+let stream = null, scanning = false, autoMode = false, autoTimer = null;
+let scanHistory = [];
+
+// ── Elements ───────────────────────────────────────────────────────────────
+const video       = document.getElementById('video');
+const canvas      = document.getElementById('canvas');
+const btnStart    = document.getElementById('btn-start');
+const btnScan     = document.getElementById('btn-scan');
+const btnAuto     = document.getElementById('btn-auto');
+const statusDot   = document.getElementById('status-dot');
+const statusText  = document.getElementById('status-text');
+const scanLine    = document.getElementById('scan-line');
+const scanPill    = document.getElementById('scanning-pill');
+
+// ── Server health ──────────────────────────────────────────────────────────
+function serverURL() { return document.getElementById('server-url').value.replace(/\/$/, ''); }
+
+async function checkServer() {
+  const dot   = document.getElementById('server-dot');
+  const label = document.getElementById('server-label');
+  dot.className = 'server-dot checking';
+  label.textContent = 'Verificando...';
+  try {
+    const r = await fetch(serverURL() + '/health', { signal: AbortSignal.timeout(4000) });
+    if (r.ok) {
+      dot.className = 'server-dot ok';
+      label.textContent = 'Servidor activo';
+    } else { throw new Error(); }
+  } catch {
+    dot.className = 'server-dot error';
+    label.textContent = 'Sin conexión';
+  }
+}
+
+checkServer();
+setInterval(checkServer, 15000);
+
+// ── Camera ─────────────────────────────────────────────────────────────────
+btnStart.addEventListener('click', async () => {
+  if (stream) { stopCamera(); return; }
+  try {
+    stream = await navigator.mediaDevices.getUserMedia({
+      video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 }, height: { ideal: 960 } }
+    });
+    video.srcObject = stream;
+    btnStart.textContent = 'Detener cámara';
+    btnScan.disabled = false;
+    setStatus('live', 'Cámara activa — apunta al residuo');
+    scanLine.classList.add('active');
+  } catch (e) {
+    setStatus('error', 'Error: permiso de cámara denegado');
+  }
+});
+
+function stopCamera() {
+  stream?.getTracks().forEach(t => t.stop());
+  stream = null;
+  video.srcObject = null;
+  btnStart.textContent = 'Iniciar cámara';
+  btnScan.disabled = true;
+  if (autoMode) toggleAuto();
+  scanLine.classList.remove('active');
+  setStatus('off', 'Cámara detenida');
+}
+
+// ── Scan ───────────────────────────────────────────────────────────────────
+btnScan.addEventListener('click', () => { if (!scanning) doScan(); });
+
+btnAuto.addEventListener('click', toggleAuto);
+
+function toggleAuto() {
+  autoMode = !autoMode;
+  btnAuto.classList.toggle('on', autoMode);
+  btnAuto.textContent = autoMode ? 'Auto ON' : 'Auto';
+  if (autoMode) {
+    doScan();
+    autoTimer = setInterval(() => { if (!scanning) doScan(); }, 4500);
+  } else {
+    clearInterval(autoTimer);
+    setStatus('live', 'Listo');
+  }
+}
+
+async function doScan() {
+  if (!stream || scanning) return;
+  scanning = true;
+  btnScan.disabled = true;
+  scanPill.classList.add('active');
+  setStatus('scanning', 'Analizando...');
+
+  // Capturar frame
+  canvas.width  = video.videoWidth;
+  canvas.height = video.videoHeight;
+  canvas.getContext('2d').drawImage(video, 0, 0);
+  const base64 = canvas.toDataURL('image/jpeg', 0.88);
+
+  try {
+    const res = await fetch(serverURL() + '/predict', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ image: base64 }),
+      signal: AbortSignal.timeout(15000),
+    });
+
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.detail || `HTTP ${res.status}`);
+    }
+
+    const data = await res.json();
+    showResult(data);
+
+  } catch (e) {
+    setStatus('error', `Error: ${e.message}`);
+  } finally {
+    scanning = false;
+    btnScan.disabled = !stream;
+    scanPill.classList.remove('active');
+    if (!autoMode && stream) setStatus('live', 'Listo para el siguiente escaneo');
+  }
+}
+
+// ── Display result ─────────────────────────────────────────────────────────
+function showResult({ material, bin, confidence, all_scores }) {
+  const conf = Math.round(confidence);
+
+  // Material & confidence
+  document.getElementById('material-name').textContent = material;
+  const badge = document.getElementById('conf-badge');
+  badge.textContent = conf + '%';
+  badge.className = 'conf-badge ' + (conf >= 80 ? 'high' : conf >= 50 ? 'medium' : 'low');
+
+  // Confidence bar
+  const fill = document.getElementById('conf-fill');
+  fill.style.width = conf + '%';
+  fill.style.background = conf >= 80 ? '#1D9E75' : conf >= 50 ? '#BA7517' : '#A32D2D';
+
+  // Card border
+  const card = document.getElementById('result-card');
+  card.className = 'result-card ' + (conf >= 80 ? 'success' : conf >= 50 ? 'warning' : 'danger');
+
+  // Bin pill
+  const color = BIN_COLORS[bin] || '#5F5E5A';
+  document.getElementById('bin-dot').style.background = color;
+  document.getElementById('bin-text').textContent = bin;
+
+  // Bin cards highlight
+  Object.values(BIN_IDS).forEach(id => {
+    const el = document.getElementById(id);
+    el.classList.remove('active');
+    el.style.borderColor = '';
+  });
+  const activeBin = BIN_IDS[bin];
+  if (activeBin) {
+    const el = document.getElementById(activeBin);
+    el.classList.add('active');
+    el.style.borderColor = color + '90';
+  }
+
+  // All scores breakdown
+  if (all_scores && Object.keys(all_scores).length) {
+    const sorted = Object.entries(all_scores).sort((a, b) => b[1] - a[1]);
+    const maxScore = sorted[0][1] || 1;
+    document.getElementById('scores-list').innerHTML = sorted.map(([label, pct], i) => `
+      <div class="score-row">
+        <span class="score-label" title="${label}">${label}</span>
+        <div class="score-track">
+          <div class="score-fill ${i === 0 ? 'top' : ''}" style="width: ${Math.round(pct / maxScore * 100)}%"></div>
+        </div>
+        <span class="score-pct">${pct.toFixed(1)}%</span>
+      </div>
+    `).join('');
+    document.getElementById('scores-section').style.display = 'block';
+  }
+
+  // Status
+  setStatus('live', `Detectado: ${material} (${conf}%)`);
+
+  // History
+  addHistory(material, conf, color);
+}
+
+// ── History ────────────────────────────────────────────────────────────────
+function addHistory(material, conf, color) {
+  const time = new Date().toLocaleTimeString('es', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  scanHistory.unshift({ material, conf, color, time });
+  if (scanHistory.length > 30) scanHistory.pop();
+  renderHistory();
+}
+
+function renderHistory() {
+  const container = document.getElementById('history-items');
+  if (!scanHistory.length) {
+    container.innerHTML = '<div class="empty-state">Sin escaneos aún</div>';
+    return;
+  }
+  container.innerHTML = scanHistory.map(h => `
+    <div class="h-item">
+      <div class="h-dot" style="background:${h.color}"></div>
+      <span class="h-mat">${h.material}</span>
+      <span class="h-conf">${h.conf}%</span>
+      <span class="h-time">${h.time}</span>
+    </div>
+  `).join('');
+}
+
+function clearHistory() { scanHistory = []; renderHistory(); }
+
+// ── Helpers ────────────────────────────────────────────────────────────────
+function setStatus(state, text) {
+  statusDot.className = 'status-dot ' + (state === 'live' ? 'live' : state === 'scanning' ? 'scanning' : state === 'error' ? 'error' : '');
+  statusText.textContent = text;
+}
+</script>
+</body>
+</html>
