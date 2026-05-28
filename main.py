@@ -7,7 +7,6 @@ import cv2
 print("TensorFlow version:", tf.__version__)
 print("Keras version:", keras.__version__)
 
-
 # Cargar el modelo
 
 model = load_model(
@@ -48,7 +47,11 @@ bins_map = {
 }
 
 # Captura de video
+<<<<<<< HEAD
 cap = cv2.VideoCapture(0)  # Cambia a 0 si usas la cámara integrada
+=======
+cap = cv2.VideoCapture(1)  # Cambia a 0 si usas la cámara integrada
+>>>>>>> 844753e825d6ca966d4cd7b86c2a6e25f2b0ad63
 
 while True:
     ret, img = cap.read()
