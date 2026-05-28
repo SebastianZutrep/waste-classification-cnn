@@ -70,3 +70,10 @@ dist/
 *.ntvs*
 *.njsproj
 *.sln
+
+!Recursos/
+!Recursos/Model/
+!Recursos/Model/*.keras
+
+Recursos/Waste/
+Recursos/Bins/
