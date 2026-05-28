@@ -19,7 +19,6 @@ from pydantic import BaseModel
 
 import tensorflow as tf
 from keras.models import load_model
-
 # ── Rutas ────────────────────────────────────────────────────────────────────
 BASE_DIR    = Path(__file__).parent
 MODEL_PATH  = BASE_DIR / "Recursos" / "Model" / "mejor_modelo.keras"
@@ -58,11 +57,14 @@ app = FastAPI(title="EcoScan API", version="1.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],   # En producción reemplaza "*" con tu dominio
+    allow_origins=[
+        "http://localhost:3000",
+        "https://waste-classification-cnn-git-main-sebastianzutreps-projects.vercel.app"
+    ],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 class PredictRequest(BaseModel):
     image: str  # base64 JPEG/PNG
